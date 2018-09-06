@@ -1,0 +1,95 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "wekan.fullname" . }}
+  labels:
+    app: {{ template "wekan.name" . }}
+    chart: {{ template "wekan.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "wekan.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "wekan.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+{{ toYaml .Values.args | indent 12 }}
+          env:
+            {{- if .Values.mongoUrl }}
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "wekan.fullname" . }}
+                  key: mongo-url
+            {{- end }}
+            {{- if .Values.mongoOplogUrl }}
+            - name: MONGO_OPLOG_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "wekan.fullname" . }}
+                  key: mongo-oplog-url
+            {{- end }}
+            {{- with .Values.rootUrl }}
+            - name: ROOT_URL
+              value: {{ . }}
+            {{- end }}
+            {{- if .Values.mailUrl }}
+            - name: MAIL_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "wekan.fullname" . }}
+                  key: mail-url
+            {{- end }}
+            {{- with .Values.extraEnv }}
+{{ toYaml . | indent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          # TODO
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            {{- with .Values.extraVolumeMounts }}
+{{ toYaml . | indent 12 }}
+            {{- else }}
+            []
+            {{- end}}
+      volumes:
+        {{- with .Values.extraVolumes }}
+{{ toYaml . | indent 8 }}
+        {{- else }}
+        []
+        {{- end}}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

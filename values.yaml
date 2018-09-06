@@ -1,0 +1,67 @@
+mongoUrl: "mongodb://wekan:test123@wekan-mongodb.wekan:27017/wekan?connectTimeoutMS=60000&socketTimeoutMS=60000"
+
+#usefull in cluster setups
+#mongoOplogUrl: "mongodb://
+
+rootUrl: https://wekan.nepomuk.io
+
+#add ?ignoreTLS=true in case of self-signed certificates
+mailUrl: "smtp://mail"
+
+replicaCount: 1
+
+image:
+  repository: quay.io/wekan/wekan
+  tag: "v1.39"
+  pullPolicy: Always
+
+args: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: kong-extern
+  path: /
+  hosts:
+    - wekan.nepomuk.io
+  tls: []
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+mongodb:
+  usePassword: true
+  mongodbUsername: "wekan"
+  mongodbPassword: "test123"
+  mongodbDatabase: "wekan"
+  mongodbRootPassword: "start1234"
+  service:
+    type: ClusterIP
+    port: 27017
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: rook-block
+  securityContext:
+    enabled: true
+    fsGroup: 0
+    runAsUser: 0
